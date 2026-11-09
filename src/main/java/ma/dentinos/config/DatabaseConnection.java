@@ -87,7 +87,7 @@ public class DatabaseConnection {
                     stmt.execute(query);
                 }
             }
-            System.out.println("✔ Tables creees et verifiees avec succes.");
+            System.out.println("✔ oui Tables creees et verifiees avec succes.");
         } catch (Exception e) {
             System.err.println("❌ Erreur schema.sql : " + e.getMessage());
         }
