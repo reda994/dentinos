@@ -19,7 +19,7 @@ public class DatabaseConnection {
 
     private DatabaseConnection() {
         loadProperties();
-        initializeDatabase(); // Crée la base et exécute le schema.sql
+        initializeDatabase();
     }
 
     public static DatabaseConnection getInstance() {
@@ -33,7 +33,7 @@ public class DatabaseConnection {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream("application.properties")) {
             Properties prop = new Properties();
             if (input == null) {
-                System.err.println("Erreur critique: application.properties introuvable.");
+                System.err.println("Erreur: application.properties introuvable.");
                 return;
             }
             prop.load(input);
@@ -51,26 +51,24 @@ public class DatabaseConnection {
     private void initializeDatabase() {
         System.out.println("--- Initialisation de la base de donnees ---");
 
-        // 1. Créer la base de données si elle n'existe pas
+        // 1. Créer la base si elle n'existe pas
         try (Connection conn = DriverManager.getConnection(baseUrl, user, password);
              Statement stmt = conn.createStatement()) {
-
             stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + dbName);
             System.out.println("✔ Base de donnees '" + dbName + "' prete.");
-
         } catch (SQLException e) {
             System.err.println("❌ Erreur de creation de la base : " + e.getMessage());
             return;
         }
 
-        // 2. Exécuter le fichier schema.sql
+        // 2. Exécuter le schema.sql
         String fullUrl = baseUrl + dbName + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
         try (Connection conn = DriverManager.getConnection(fullUrl, user, password);
              Statement stmt = conn.createStatement();
              InputStream is = getClass().getClassLoader().getResourceAsStream("db/schema.sql")) {
 
             if (is == null) {
-                System.err.println("❌ Fichier schema.sql introuvable dans resources/db/");
+                System.err.println("❌ schema.sql introuvable.");
                 return;
             }
 
@@ -78,13 +76,11 @@ public class DatabaseConnection {
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                // Ignorer les commentaires SQL et les lignes vides
                 if (!line.trim().startsWith("--") && !line.trim().isEmpty()) {
                     sb.append(line).append("\n");
                 }
             }
 
-            // Séparer les requêtes par ';'
             String[] queries = sb.toString().split(";");
             for (String query : queries) {
                 if (!query.trim().isEmpty()) {
@@ -92,11 +88,9 @@ public class DatabaseConnection {
                 }
             }
             System.out.println("✔ Tables creees et verifiees avec succes.");
-
         } catch (Exception e) {
-            System.err.println("❌ Erreur d'execution du schema.sql : " + e.getMessage());
+            System.err.println("❌ Erreur schema.sql : " + e.getMessage());
         }
-        System.out.println("---------------------------------------------");
     }
 
     public Connection getConnection() throws SQLException {
